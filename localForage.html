@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Web Forage Demo</title>
+		<link rel="stylesheet" href="./css/bootstrap.css"></link>
+		<link rel="stylesheet" href="./css/bootstrap-theme.css"></link>
+	</head>
+	<body>
+		<div class="container-fluid">
+  			<h1>Web Forage Demo</h1>
+			  <p>
+				  <strong>LocalForage</strong> is a project by <strong>Mozilla</strong> that is a LocalStorage Polyfil.
+				  
+				  LocalForage uses IndexDB or WebSQL, then downgrades to LocalStorage. 
+			  </p>
+			  <p>
+				  Available at <strong><a href="http://mozilla.github.io/localForage">http://mozilla.github.io/localForage</a></strong>
+			  </p>
+			
+			  <h1>LocalForage Demo</h1>
+			<div class="row-fluid">
+				<div class="form-group">
+					<label for="strInput">Store Value</label>
+					<input id="strInput" type="text" class="form-control span4"></input>
+				</div>
+				<button id='btnSave' class="btn btn-primary">Submit</button>
+			</div>
+			<div class="row-fluid">
+				<h3>Clear Storage</h3>
+				<button id="btnClear" class="btn btn-danger">Clear</button> 
+			</div>
+			 
+			 <div class="row-fluid">
+				 <h3>Display Stored Values</h3>
+				 <button id="btnGet" class="btn btn-success">Display Saved Value</button>
+				 <ul id="divDisp">
+				 </ul> 		  
+			 </div> 		  
+		</div>
+			
+		<script src="./js/jquery-1.11.2.min.js"></script>
+		<script src="./js/bootstrap.js"></script>
+		<script src="./js/lodash.min.js"></script>
+		<script src="./js/localforage.js"></script>	
+			
+		<script type="text/javascript">
+			$(function(){
+				$("#btnSave").on('click',function(evt){
+					evt.preventDefault();
+					var txt = $("#strInput").val();
+					
+					localStorage.setItem("myValue", txt);
+					console.log("Storing:"+txt);
+				});
+				$("#btnClear").on('click',function(evt){
+					evt.preventDefault();
+					localStorage.clear();
+				});
+				
+				$("#btnGet").on('click',function(evt){
+					evt.preventDefault();
+					var txt = localStorage.getItem("myValue");
+					
+					$("#divDisp").append('<li>'+_.escape(txt)+'</li>');
+				});
+			});
+			
+		</script>
+	</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Web Storage Demo</title>
+		<link rel="stylesheet" href="./css/bootstrap.css"></link>
+		<link rel="stylesheet" href="./css/bootstrap-theme.css"></link>
+	</head>
+	<body>
+		<div class="container-fluid">
+  			<h1>Web Storage Demo</h1>
+			  <ul>
+				  <li>Part of HTML5</li>
+				  <li>Effectively SQLite</li>
+				  <li>Supported, but bleeding, in 50% of browsers
+					  <ul>
+						  <li>~IE 10.0+</li>
+						  <li>Firefox 31+</li>
+						  <li>Safari ~8+</li>
+						  <li>Chrome 31+</li>
+						  <li>IPhone Safari 8.3+</li>
+						  <li>Android 4.4+</li>
+					  </ul>
+				  </li>
+				  <li>
+					  Does not like WebWorkers in Firefox and Safari.
+				  </li>
+			  </ul>
+			  <p>
+				  See Mozilla Developer Network To-Do example:
+				  https://github.com/mdn/to-do-notifications
+			  </p>
+			  <h1>Local Storage Demo</h1>
+			<div class="row-fluid">
+				<div class="form-group">
+					<label for="strInput">Store Value</label>
+					<input id="strInput" type="text" class="form-control span4"></input>
+				</div>
+				<button id='btnSave' class="btn btn-primary">Submit</button>
+			</div>
+			<div class="row-fluid">
+				<h3>Clear Storage</h3>
+				<button id="btnClear" class="btn btn-danger">Clear</button> 
+			</div>
+			 
+			 <div class="row-fluid">
+				 <h3>Display Stored Values</h3>
+				 <button id="btnGet" class="btn btn-success">Display Saved Value</button>
+				 <ul id="divDisp">
+				 </ul> 		  
+			 </div> 		  
+		</div>
+			
+		<script src="./js/jquery-1.11.2.min.js"></script>
+		<script src="./js/bootstrap.js"></script>
+		<script src="./js/lodash.min.js"></script>
+			
+		<script type="text/javascript">
+			$(function(){
+				
+				if (!window['indexedDB']){ 
+					alert('Sorry, we don\'t serve your kind around here'); 
+					return;
+				};
+				var dbo;
+				
+				// In the following line, you should include the prefixes of implementations you want to test.
+  				window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+				  // DON'T use "var indexedDB = ..." if you're not in a function.
+				  // Moreover, you may need references to some window.IDB* objects:
+				window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+				window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+				
+				var dboreq = window.indexedDB.open("savedData", 4);
+				
+				dboreq.onerror = function(event){
+					logError("Error loading Database");
+				};
+				
+				dboreq.onsuccess = function(event){
+					logInfo("Database initialized");
+					
+					dbo = dboreq.result;
+					
+					dbo.onerror = function(event){
+						logError("Error Loading Database");
+					};
+					
+					var objStore = dbo.createObjectStore("text", {keyPath: "textPath"});
+					objStore.createIndex("value", "value", {unique: false});	
+						
+				};
+				
+				
+				function saveData(msg){
+					var trans = dbo.transaction(["text"], 'readwrite');
+					var ostore = trans.objectStore("text");
+
+					trans.oncomplete = function(){
+						logInfo("Transaction Complete");
+					};
+					trans.onerror = function(){
+						logError("Transaction Error");
+					};
+					
+					var newText = {value:msg};
+					ostore.add(newText);
+					
+				}
+				
+				function requestData(callback){
+					var trans = dbo.transaction(['text'], 'read');
+					var ostore = trans.objectStore("text");
+					
+					trans.oncomplete = function(){
+						logInfo("Transaction Complete");
+					};
+					trans.onerror = function(){
+						logError("Transaction Error");
+					};
+					
+					ostore.openCursor().onsuccess = function(event){
+						var cur = event.target.result;
+						if (cur){
+							console.log(cur.value);
+							if (callback){
+								callback(cur.value);
+							}
+						}
+					};
+					
+				}
+				
+				
+				
+				
+				function logError(msg){
+					$("#divDisp").append('<div class="label label-error">'+msg+'</li>');
+				}
+				
+				function logInfo(msg){
+					$("#divDisp").append('<div class="label">'+msg+'</li>');
+				}
+				
+				
+				
+				$("#btnSave").on('click',function(evt){
+					evt.preventDefault();
+					var txt = $("#strInput").val();
+					logInfo("Storing:"+txt);
+					saveData(txt);
+				});
+				
+				$("#btnClear").on('click',function(evt){
+					evt.preventDefault();
+					window.localStorage.clear();
+				});
+				
+				$("#btnGet").on('click',function(evt){
+					evt.preventDefault();
+					requestData(function(data){
+						logInfo("Returned Value:"+data);
+
+					});
+				});
+				
+			});
+			
+		</script>
+	</body>
+</html>
