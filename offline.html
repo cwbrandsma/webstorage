@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Web Storage Demo</title>
+		<link rel="stylesheet" href="./css/bootstrap.css"></link>
+		<link rel="stylesheet" href="./css/bootstrap-theme.css"></link>
+	</head>
+	<body>
+		<div class="container-fluid">
+  			<h1>Web Storage Demo</h1>
+			  <ul>
+				  <li>Part of HTML5</li>
+				  <li>Supported in 
+					  <ul>
+						  <li>IE 8.0+</li>
+						  <li>Firefox 3.5+</li>
+						  <li>Safari 4.0+</li>
+						  <li>Chrome 4.0+</li>
+						  <li>IPhone 2.0+</li>
+						  <li>Android 2.0+</li>
+					  </ul>
+					  
+				  </li>
+			  </ul>
+			  <p>
+				  <strong>LocalStorage</strong> saves up to 5MB of text data in the browser. 
+			  </p>
+			  <p>
+				  <strong>SessionStorage</strong> is similar, but data goes away after the browser is closed.
+			  </p>
+			  <p>
+				  <h3>Detect in browser</h3>
+				  <pre><code>
+function supports_html5_storage() {
+  try {
+    return 'localStorage' in window && window['localStorage'] !== null;
+  } catch (e) {
+    return false;
+  }
+}					  
+				  </code></pre>
+			  </p>
+			  <h1>Local Storage Demo</h1>
+			<div class="row-fluid">
+				<div class="form-group">
+					<label for="strInput">Store Value</label>
+					<input id="strInput" type="text" class="form-control span4"></input>
+				</div>
+				<button id='btnSave' class="btn btn-primary">Submit</button>
+			</div>
+			<div class="row-fluid">
+				<h3>Clear Storage</h3>
+				<button id="btnClear" class="btn btn-danger">Clear</button> 
+			</div>
+			 
+			 <div class="row-fluid">
+				 <h3>Display Stored Values</h3>
+				 <button id="btnGet" class="btn btn-success">Display Saved Value</button>
+				 <ul id="divDisp">
+				 </ul> 		  
+			 </div> 		  
+		</div>
+			
+		<script src="./js/jquery-1.11.2.min.js"></script>
+		<script src="./js/bootstrap.js"></script>
+		<script src="./js/lodash.min.js"></script>
+			
+		<script type="text/javascript">
+			$(function(){
+				
+				if (!window['localStorage']){ 
+					alert('DUDE! Really?  This is the best browser you have?'); 
+					return;
+				};
+				
+				$("#btnSave").on('click',function(evt){
+					evt.preventDefault();
+					var txt = $("#strInput").val();
+					
+					window.localStorage.setItem("myValue", txt);
+					console.log("Storing:"+txt);
+				});
+				$("#btnClear").on('click',function(evt){
+					evt.preventDefault();
+					window.localStorage.clear();
+				});
+				
+				$("#btnGet").on('click',function(evt){
+					evt.preventDefault();
+					var txt = window.localStorage.getItem("myValue");
+					
+					$("#divDisp").append('<li>'+_.escape(txt)+'</li>');
+				});
+			});
+			
+		</script>
+	</body>
+</html>

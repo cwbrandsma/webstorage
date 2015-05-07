@@ -5,8 +5,8 @@
 	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 	    <meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Web Storage Demo</title>
-		<link rel="stylesheet" href="./css/bootstrap.css"></link>
-		<link rel="stylesheet" href="./css/bootstrap-theme.css"></link>
+		<link rel="stylesheet" href="./css/bootstrap.css">
+		<link> rel="stylesheet" href="./css/bootstrap-theme.css">
 	</head>
 	<body>
 		<div class="container-fluid">
@@ -35,8 +35,12 @@
 			  <h1>Local Storage Demo</h1>
 			<div class="row-fluid">
 				<div class="form-group">
-					<label for="strInput">Store Value</label>
-					<input id="strInput" type="text" class="form-control span4"></input>
+					<label for="nameInput">Name</label>
+					<input id="nameInput" type="text" class="form-control span4" />
+				</div>
+				<div class="form-group">
+					<label for="emailInput">Email</label>
+					<input id="emailInput" type="email" class="form-control span4" />
 				</div>
 				<button id='btnSave' class="btn btn-primary">Submit</button>
 			</div>
@@ -48,9 +52,15 @@
 			 <div class="row-fluid">
 				 <h3>Display Stored Values</h3>
 				 <button id="btnGet" class="btn btn-success">Display Saved Value</button>
-				 <ul id="divDisp">
-				 </ul> 		  
-			 </div> 		  
+				 <div id="divDisp"> </div>
+
+
+			 </div>
+
+			<div class="well">
+				<h3>Log</h3>
+				<ul id="logDisp"></ul>
+			</div>
 		</div>
 			
 		<script src="./js/jquery-1.11.2.min.js"></script>
@@ -60,10 +70,6 @@
 		<script type="text/javascript">
 			$(function(){
 				
-				if (!window['indexedDB']){ 
-					alert('Sorry, we don\'t serve your kind around here'); 
-					return;
-				};
 				var dbo;
 				
 				// In the following line, you should include the prefixes of implementations you want to test.
@@ -72,31 +78,54 @@
 				  // Moreover, you may need references to some window.IDB* objects:
 				window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
 				window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-				
-				var dboreq = window.indexedDB.open("savedData", 4);
+
+				if (!window['indexedDB']){
+					alert('Sorry, we don\'t serve your kind around here');
+					return;
+				}
+
+				var dboreq = window.indexedDB.open("bsdg_demo2", 1);
 				
 				dboreq.onerror = function(event){
 					logError("Error loading Database");
 				};
-				
+
+				dboreq.onupgradeneeded = function(event){
+					logInfo("creating database")
+					var dbo = event.target.result;
+					var objStore = dbo.createObjectStore("members", { autoIncrement : true });
+					objStore.createIndex("name", "name", { unique: false});
+					objStore.createIndex("email", "email", { unique: true});
+
+
+					var members = [
+						{name: 'Chris Brandsma', email:'chris.brandsma@gmail.com'},
+						{name: 'Scott Nichols',  email:'snichols@live.com'}
+					];
+
+					logInfo("Adding existing members");
+					objStore.transaction.oncomplete = function(event){
+						var db = event.target.result;
+						var memStore = db.transaction(["members"], "readwrite").objectStore("members");
+						for(var i=0;i<members.length;i++){
+							memStore.add(members[i]);
+						}
+					}
+				};
+
 				dboreq.onsuccess = function(event){
-					logInfo("Database initialized");
+					logInfo("Database loaded");
 					
-					dbo = dboreq.result;
+					window['dbo'] = dbo = event.target.result;
 					
 					dbo.onerror = function(event){
 						logError("Error Loading Database");
 					};
-					
-					var objStore = dbo.createObjectStore("text", {keyPath: "textPath"});
-					objStore.createIndex("value", "value", {unique: false});	
-						
 				};
-				
-				
-				function saveData(msg){
-					var trans = dbo.transaction(["text"], 'readwrite');
-					var ostore = trans.objectStore("text");
+
+				function saveData(member){
+					var trans = dbo.transaction(["members"], "readwrite").objectStore("members");
+					trans.add(member);
 
 					trans.oncomplete = function(){
 						logInfo("Transaction Complete");
@@ -104,53 +133,80 @@
 					trans.onerror = function(){
 						logError("Transaction Error");
 					};
-					
-					var newText = {value:msg};
-					ostore.add(newText);
-					
 				}
 				
-				function requestData(callback){
-					var trans = dbo.transaction(['text'], 'read');
-					var ostore = trans.objectStore("text");
-					
+				function requestData(tblbdy){
+					var trans = dbo.transaction(["members"], "readwrite").objectStore("members");
+
 					trans.oncomplete = function(){
 						logInfo("Transaction Complete");
 					};
 					trans.onerror = function(){
 						logError("Transaction Error");
 					};
-					
-					ostore.openCursor().onsuccess = function(event){
+
+					trans.openCursor().onsuccess = function(event){
 						var cur = event.target.result;
 						if (cur){
+							var name = cur.value.name;
+							var email = cur.value.email;
+							var key = cur.key;
+
+							var row = $("<tr><td class='a'></td><td>"+key+"</td><td>"+name+"</td><td>"+email+"</td></tr>").appendTo(tblbdy);
+							var a = row.find('.a');
+
+							var btn1 = $("<button class='btn'>Update</button>").appendTo(a).click(function(evt){evt.preventDefault();  update(key)});
+							var btn2 = $("<button class='btn'>Remove</button>").appendTo(a).click(function(evt){evt.preventDefault();  remove(key)});
+
 							console.log(cur.value);
-							if (callback){
-								callback(cur.value);
-							}
+							cur.continue();
+						} else {
+							logInfo("displayed all rows");
 						}
 					};
-					
 				}
 				
-				
+				function update(key){
+					var trans = dbo.transaction(["members"], "readwrite").objectStore("members");
+					var reqget = trans.get(key);
+					reqget.onsuccess = function(event){
+						var data = event.target.result;
+						data.name = data.name + " updated";
+
+						var requpd = trans.put(data);
+						requpd.onsuccess = function(event){
+							logInfo("data updated");
+						}
+
+					}
+				}
+
+				function remove(key){
+					var trans = dbo.transaction(["members"], "readwrite").objectStore("members");
+					var reqget = trans.delete(key);
+					reqget.onsuccess = function(event){
+						logInfo("data removed");
+					}
+
+				}
 				
 				
 				function logError(msg){
-					$("#divDisp").append('<div class="label label-error">'+msg+'</li>');
+					$("#logDisp").append('<li><span class="label label-error">'+msg+'</span></li>');
 				}
 				
 				function logInfo(msg){
-					$("#divDisp").append('<div class="label">'+msg+'</li>');
+					$("#logDisp").append('<li><span class="label label-default">'+msg+'</span></li>');
 				}
-				
-				
-				
+
 				$("#btnSave").on('click',function(evt){
 					evt.preventDefault();
-					var txt = $("#strInput").val();
-					logInfo("Storing:"+txt);
-					saveData(txt);
+					var name = $("#nameInput").val();
+					var email = $("#emailInput").val();
+
+					logInfo("Storing:"+name+" "+ email);
+					var member = {name:name, email:email};
+					saveData(member);
 				});
 				
 				$("#btnClear").on('click',function(evt){
@@ -160,10 +216,12 @@
 				
 				$("#btnGet").on('click',function(evt){
 					evt.preventDefault();
-					requestData(function(data){
-						logInfo("Returned Value:"+data);
+					var cntr = $("#divDisp").empty();
+					var tbl = $('<table class="table"><thead><tr><th></th><th>Key</th><th>Name</th><th>Email</th></tr></thead><tbody></tbody></table>');
+					var bdy = tbl.find("tbody");
+					tbl.appendTo(cntr);
 
-					});
+					requestData(bdy);
 				});
 				
 			});
